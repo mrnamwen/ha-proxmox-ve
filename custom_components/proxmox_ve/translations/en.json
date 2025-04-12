@@ -1,0 +1,104 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Proxmox VE",
+        "description": "Set up a connection to your Proxmox VE server.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password",
+          "realm": "Realm",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Proxmox VE server",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This Proxmox VE server is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Proxmox VE Options",
+        "description": "Configure options for your Proxmox VE integration.",
+        "data": {
+          "verify_ssl": "Verify SSL certificate"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "vm_status": {
+        "name": "Status",
+        "state": {
+          "on": "Running",
+          "off": "Stopped"
+        }
+      },
+      "node_status": {
+        "name": "Status",
+        "state": {
+          "on": "Online",
+          "off": "Offline"
+        }
+      }
+    },
+    "sensor": {
+      "vm_cpu": {
+        "name": "CPU Usage"
+      },
+      "vm_memory": {
+        "name": "Memory Usage"
+      },
+      "vm_disk": {
+        "name": "Disk Size"
+      },
+      "vm_ip": {
+        "name": "IP Address"
+      },
+      "node_cpu": {
+        "name": "CPU Usage"
+      },
+      "node_memory": {
+        "name": "Memory Usage"
+      },
+      "node_disk": {
+        "name": "Disk Usage"
+      },
+      "storage": {
+        "name": "Storage Usage"
+      }
+    },
+    "switch": {
+      "vm_start": {
+        "name": "Start"
+      },
+      "vm_shutdown": {
+        "name": "Shutdown"
+      },
+      "vm_restart": {
+        "name": "Restart"
+      },
+      "vm_force_stop": {
+        "name": "Force Stop"
+      },
+      "vm_force_restart": {
+        "name": "Force Restart"
+      },
+      "node_shutdown": {
+        "name": "Shutdown"
+      },
+      "node_restart": {
+        "name": "Restart"
+      }
+    }
+  }
+}
