@@ -209,14 +209,30 @@ class ProxmoxVMMemorySensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, vm_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._vm_id = vm_id
         self._entry_id = entry_id
+        
+        # Set name based on vm_id initially, then get VM data
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_memory"
+        name = f"VM {vm_id} Memory"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_memory"
-        name = f"{self._vm_data.get('name', f'VM {vm_id}')} Memory" if self._vm_data else f"VM {vm_id} Memory"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have VM data
+        if self._vm_data and self._vm_data.get("name"):
+            self._attr_name = f"{self._vm_data['name']} Memory"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
@@ -290,14 +306,30 @@ class ProxmoxVMDiskSensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, vm_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._vm_id = vm_id
         self._entry_id = entry_id
+        
+        # Set name based on vm_id initially, then get VM data
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_disk"
+        name = f"VM {vm_id} Disk"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_disk"
-        name = f"{self._vm_data.get('name', f'VM {vm_id}')} Disk" if self._vm_data else f"VM {vm_id} Disk"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have VM data
+        if self._vm_data and self._vm_data.get("name"):
+            self._attr_name = f"{self._vm_data['name']} Disk"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
@@ -361,14 +393,30 @@ class ProxmoxVMIpSensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, vm_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._vm_id = vm_id
         self._entry_id = entry_id
+        
+        # Set name based on vm_id initially, then get VM data
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_ip"
+        name = f"VM {vm_id} IP"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_ip"
-        name = f"{self._vm_data.get('name', f'VM {vm_id}')} IP" if self._vm_data else f"VM {vm_id} IP"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have VM data
+        if self._vm_data and self._vm_data.get("name"):
+            self._attr_name = f"{self._vm_data['name']} IP"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
@@ -437,14 +485,30 @@ class ProxmoxNodeCpuSensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, node_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set name based on node_id initially, then get Node data
+        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_cpu"
+        name = f"Node {node_id} CPU"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get node data after coordinator is available
         self._node_data = self._get_node_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_cpu"
-        name = f"{self._node_data.get('name', f'Node {node_id}')} CPU" if self._node_data else f"Node {node_id} CPU"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have node data
+        if self._node_data and self._node_data.get("name"):
+            self._attr_name = f"{self._node_data['name']} CPU"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
@@ -507,14 +571,30 @@ class ProxmoxNodeMemorySensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, node_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set name based on node_id initially, then get Node data
+        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_memory"
+        name = f"Node {node_id} Memory"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get node data after coordinator is available
         self._node_data = self._get_node_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_memory"
-        name = f"{self._node_data.get('name', f'Node {node_id}')} Memory" if self._node_data else f"Node {node_id} Memory"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have node data
+        if self._node_data and self._node_data.get("name"):
+            self._attr_name = f"{self._node_data['name']} Memory"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
@@ -587,14 +667,30 @@ class ProxmoxNodeDiskSensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, node_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set name based on node_id initially, then get Node data
+        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_disk"
+        name = f"Node {node_id} Disk"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get node data after coordinator is available
         self._node_data = self._get_node_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_disk"
-        name = f"{self._node_data.get('name', f'Node {node_id}')} Disk" if self._node_data else f"Node {node_id} Disk"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have node data
+        if self._node_data and self._node_data.get("name"):
+            self._attr_name = f"{self._node_data['name']} Disk"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
@@ -667,15 +763,27 @@ class ProxmoxStorageSensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, storage_id: str, node_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._storage_id = storage_id
         self._node_id = node_id
         self._entry_id = entry_id
-        self._storage_data = self._get_storage_data()
         
+        # Set name based on storage_id initially
         unique_id = f"{DOMAIN}_{entry_id}_storage_{storage_id}_{node_id}"
         name = f"Storage {storage_id} ({node_id})"
         
-        super().__init__(coordinator, unique_id, name)
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get storage data after coordinator is available
+        self._storage_data = self._get_storage_data()
+        
+        # Set attributes
+        self._attr_name = name
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback
