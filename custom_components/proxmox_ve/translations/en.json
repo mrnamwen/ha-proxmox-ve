@@ -43,6 +43,13 @@
           "off": "Stopped"
         }
       },
+      "container_status": {
+        "name": "Status",
+        "state": {
+          "on": "Running",
+          "off": "Stopped"
+        }
+      },
       "node_status": {
         "name": "Status",
         "state": {
@@ -62,6 +69,18 @@
         "name": "Disk Size"
       },
       "vm_ip": {
+        "name": "IP Address"
+      },
+      "container_cpu": {
+        "name": "CPU Usage"
+      },
+      "container_memory": {
+        "name": "Memory Usage"
+      },
+      "container_disk": {
+        "name": "Disk Size"
+      },
+      "container_ip": {
         "name": "IP Address"
       },
       "node_cpu": {

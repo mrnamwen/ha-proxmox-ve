@@ -19,7 +19,7 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
-from homeassistant.util.unit_conversion import InformationSize
+# Remove import that doesn't exist
 
 from .const import (
     DOMAIN,

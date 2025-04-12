@@ -109,75 +109,139 @@ class ProxmoxAPI:
         return nodes
 
     def get_vms(self) -> List[Dict]:
-        """Get all VMs in the cluster."""
+        """Get all VMs and LXC containers in the cluster."""
         self._connect()
         vms = []
         
+        # Get all VMs and containers
         for vm in self._proxmox.cluster.resources.get(type="vm"):
             vm_id = vm["vmid"]
             node = vm["node"]
+            vm_type = vm.get("type", "")  # 'qemu' for VMs, 'lxc' for containers
             
             try:
-                # Get more detailed VM info
-                config = self._proxmox.nodes(node).qemu(vm_id).config.get()
-                
-                # Try to get IP address
-                ip_address = None
-                try:
-                    agent_network = self._proxmox.nodes(node).qemu(vm_id).agent.get("network-get-interfaces")
-                    for interface in agent_network.get("result", []):
-                        for ip_info in interface.get("ip-addresses", []):
-                            if ip_info.get("ip-address-type") == "ipv4":
-                                ip_address = ip_info.get("ip-address")
-                                break
-                        if ip_address:
-                            break
-                except Exception:
-                    # Agent might not be running
-                    pass
-                
-                # Get disks for storage info
-                disks = {}
-                for key, value in config.items():
-                    if key.startswith(("ide", "sata", "scsi", "virtio")):
-                        if "size" in value:
-                            disks[key] = value
-                
-                total_disk = 0
-                for disk in disks.values():
-                    # Parse size string (e.g., "32G")
-                    size_str = disk.get("size", "0")
+                # Different handling based on VM type
+                if vm_type == "lxc":
+                    # Handle LXC container
                     try:
-                        if size_str.endswith("G"):
-                            size = float(size_str[:-1]) * 1024 * 1024 * 1024
-                        elif size_str.endswith("M"):
-                            size = float(size_str[:-1]) * 1024 * 1024
-                        else:
-                            size = float(size_str)
-                        total_disk += size
-                    except ValueError:
-                        pass
-                
-                vms.append({
-                    "id": vm_id,
-                    "name": vm.get("name", f"VM {vm_id}"),
-                    "node": node,
-                    "status": vm.get("status", "unknown"),
-                    "cpu": {
-                        "used": vm.get("cpu", 0),
-                        "total": config.get("cores", 1),
-                    },
-                    "memory": {
-                        "used": vm.get("mem", 0),
-                        "total": config.get("memory", 0) * 1024 * 1024,  # Convert to bytes
-                    },
-                    "disk": {
-                        "total": total_disk,
-                    },
-                    "ip_address": ip_address,
-                })
+                        config = self._proxmox.nodes(node).lxc(vm_id).config.get()
+                        
+                        # Try to get IP address
+                        ip_address = None
+                        try:
+                            # LXC IP address might be in the config
+                            for key, value in config.items():
+                                if key.startswith("net") and "ip=" in value:
+                                    ip_parts = value.split("ip=")[1].split("/")[0]
+                                    ip_address = ip_parts.split(",")[0]
+                                    break
+                        except Exception:
+                            pass
+                        
+                        # Get rootfs disk size
+                        total_disk = 0
+                        for key, value in config.items():
+                            if key.startswith(("rootfs", "mp")):
+                                # Parse size string (e.g., "32G")
+                                if "size=" in value:
+                                    size_str = value.split("size=")[1].split(",")[0]
+                                    try:
+                                        if size_str.endswith("G"):
+                                            size = float(size_str[:-1]) * 1024 * 1024 * 1024
+                                        elif size_str.endswith("M"):
+                                            size = float(size_str[:-1]) * 1024 * 1024
+                                        else:
+                                            size = float(size_str)
+                                        total_disk += size
+                                    except ValueError:
+                                        pass
+                        
+                        vms.append({
+                            "id": vm_id,
+                            "name": vm.get("name", f"Container {vm_id}"),
+                            "node": node,
+                            "type": "lxc",
+                            "status": vm.get("status", "unknown"),
+                            "cpu": {
+                                "used": vm.get("cpu", 0),
+                                "total": int(config.get("cores", 1)),
+                            },
+                            "memory": {
+                                "used": vm.get("mem", 0),
+                                "total": int(config.get("memory", 0)) * 1024 * 1024,  # Convert to bytes
+                            },
+                            "disk": {
+                                "total": total_disk,
+                            },
+                            "ip_address": ip_address,
+                        })
+                    except Exception as error:
+                        _LOGGER.error("Error getting details for LXC container %s: %s", vm_id, error)
+                else:
+                    # Handle QEMU VM
+                    try:
+                        config = self._proxmox.nodes(node).qemu(vm_id).config.get()
+                        
+                        # Try to get IP address
+                        ip_address = None
+                        try:
+                            agent_network = self._proxmox.nodes(node).qemu(vm_id).agent.get("network-get-interfaces")
+                            for interface in agent_network.get("result", []):
+                                for ip_info in interface.get("ip-addresses", []):
+                                    if ip_info.get("ip-address-type") == "ipv4":
+                                        ip_address = ip_info.get("ip-address")
+                                        break
+                                if ip_address:
+                                    break
+                        except Exception:
+                            # Agent might not be running
+                            pass
+                        
+                        # Get disks for storage info
+                        disks = {}
+                        for key, value in config.items():
+                            if key.startswith(("ide", "sata", "scsi", "virtio")):
+                                if "size" in value:
+                                    disks[key] = value
+                        
+                        total_disk = 0
+                        for disk in disks.values():
+                            # Parse size string (e.g., "32G")
+                            size_str = disk.get("size", "0")
+                            try:
+                                if size_str.endswith("G"):
+                                    size = float(size_str[:-1]) * 1024 * 1024 * 1024
+                                elif size_str.endswith("M"):
+                                    size = float(size_str[:-1]) * 1024 * 1024
+                                else:
+                                    size = float(size_str)
+                                total_disk += size
+                            except ValueError:
+                                pass
+                        
+                        vms.append({
+                            "id": vm_id,
+                            "name": vm.get("name", f"VM {vm_id}"),
+                            "node": node,
+                            "type": "qemu",
+                            "status": vm.get("status", "unknown"),
+                            "cpu": {
+                                "used": vm.get("cpu", 0),
+                                "total": config.get("cores", 1),
+                            },
+                            "memory": {
+                                "used": vm.get("mem", 0),
+                                "total": config.get("memory", 0) * 1024 * 1024,  # Convert to bytes
+                            },
+                            "disk": {
+                                "total": total_disk,
+                            },
+                            "ip_address": ip_address,
+                        })
+                    except Exception as error:
+                        _LOGGER.error("Error getting details for VM %s: %s", vm_id, error)
             except Exception as error:
-                _LOGGER.error("Error getting details for VM %s: %s", vm_id, error)
+                _LOGGER.error("Error processing VM/container %s: %s", vm_id, error)
         
         return vms
 
@@ -210,56 +274,91 @@ class ProxmoxAPI:
         
         return storages
 
+    def _get_vm_type(self, node_id: str, vm_id: int) -> str:
+        """Determine if a VM is a QEMU VM or LXC container."""
+        self._connect()
+        for vm in self._proxmox.cluster.resources.get(type="vm"):
+            if str(vm["vmid"]) == str(vm_id) and vm["node"] == node_id:
+                return vm.get("type", "qemu")
+        return "qemu"  # Default to qemu if not found
+
     def start_vm(self, node_id: str, vm_id: int) -> bool:
-        """Start a VM."""
+        """Start a VM or container."""
         try:
             self._connect()
-            self._proxmox.nodes(node_id).qemu(vm_id).status.start.post()
+            vm_type = self._get_vm_type(node_id, vm_id)
+            
+            if vm_type == "lxc":
+                self._proxmox.nodes(node_id).lxc(vm_id).status.start.post()
+            else:
+                self._proxmox.nodes(node_id).qemu(vm_id).status.start.post()
             return True
         except Exception as error:
-            _LOGGER.error("Error starting VM %s: %s", vm_id, error)
+            _LOGGER.error("Error starting VM/container %s: %s", vm_id, error)
             return False
 
     def shutdown_vm(self, node_id: str, vm_id: int) -> bool:
-        """Shutdown a VM gracefully."""
+        """Shutdown a VM or container gracefully."""
         try:
             self._connect()
-            self._proxmox.nodes(node_id).qemu(vm_id).status.shutdown.post()
+            vm_type = self._get_vm_type(node_id, vm_id)
+            
+            if vm_type == "lxc":
+                self._proxmox.nodes(node_id).lxc(vm_id).status.shutdown.post()
+            else:
+                self._proxmox.nodes(node_id).qemu(vm_id).status.shutdown.post()
             return True
         except Exception as error:
-            _LOGGER.error("Error shutting down VM %s: %s", vm_id, error)
+            _LOGGER.error("Error shutting down VM/container %s: %s", vm_id, error)
             return False
 
     def restart_vm(self, node_id: str, vm_id: int) -> bool:
-        """Restart a VM gracefully."""
+        """Restart a VM or container gracefully."""
         try:
             self._connect()
-            self._proxmox.nodes(node_id).qemu(vm_id).status.reboot.post()
+            vm_type = self._get_vm_type(node_id, vm_id)
+            
+            if vm_type == "lxc":
+                self._proxmox.nodes(node_id).lxc(vm_id).status.reboot.post()
+            else:
+                self._proxmox.nodes(node_id).qemu(vm_id).status.reboot.post()
             return True
         except Exception as error:
-            _LOGGER.error("Error restarting VM %s: %s", vm_id, error)
+            _LOGGER.error("Error restarting VM/container %s: %s", vm_id, error)
             return False
 
     def force_stop_vm(self, node_id: str, vm_id: int) -> bool:
-        """Force stop a VM."""
+        """Force stop a VM or container."""
         try:
             self._connect()
-            self._proxmox.nodes(node_id).qemu(vm_id).status.stop.post()
+            vm_type = self._get_vm_type(node_id, vm_id)
+            
+            if vm_type == "lxc":
+                self._proxmox.nodes(node_id).lxc(vm_id).status.stop.post()
+            else:
+                self._proxmox.nodes(node_id).qemu(vm_id).status.stop.post()
             return True
         except Exception as error:
-            _LOGGER.error("Error force stopping VM %s: %s", vm_id, error)
+            _LOGGER.error("Error force stopping VM/container %s: %s", vm_id, error)
             return False
 
     def force_restart_vm(self, node_id: str, vm_id: int) -> bool:
-        """Force restart a VM."""
+        """Force restart a VM or container."""
         try:
             self._connect()
-            # First stop, then start
-            self._proxmox.nodes(node_id).qemu(vm_id).status.stop.post()
-            self._proxmox.nodes(node_id).qemu(vm_id).status.start.post()
+            vm_type = self._get_vm_type(node_id, vm_id)
+            
+            if vm_type == "lxc":
+                # First stop, then start for LXC
+                self._proxmox.nodes(node_id).lxc(vm_id).status.stop.post()
+                self._proxmox.nodes(node_id).lxc(vm_id).status.start.post()
+            else:
+                # First stop, then start for QEMU
+                self._proxmox.nodes(node_id).qemu(vm_id).status.stop.post()
+                self._proxmox.nodes(node_id).qemu(vm_id).status.start.post()
             return True
         except Exception as error:
-            _LOGGER.error("Error force restarting VM %s: %s", vm_id, error)
+            _LOGGER.error("Error force restarting VM/container %s: %s", vm_id, error)
             return False
 
     def shutdown_node(self, node_id: str) -> bool:

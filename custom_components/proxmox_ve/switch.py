@@ -104,7 +104,9 @@ class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
         via_device: Optional[tuple] = None,
     ) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator)
+        # Explicitly initialize the CoordinatorEntity parent class
+        CoordinatorEntity.__init__(self, coordinator)
+        self.coordinator = coordinator
         self._api = api
         self._attr_unique_id = unique_id
         self._attr_name = name
@@ -169,7 +171,7 @@ class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
 
 
 class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
-    """Switch to start a VM."""
+    """Switch to start a VM or container."""
     
     def __init__(
         self,
@@ -230,7 +232,7 @@ class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
 
 
 class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
-    """Switch to shutdown a VM."""
+    """Switch to shutdown a VM or container."""
     
     def __init__(
         self,
@@ -291,7 +293,7 @@ class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
 
 
 class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
-    """Switch to restart a VM."""
+    """Switch to restart a VM or container."""
     
     def __init__(
         self,
@@ -352,7 +354,7 @@ class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
 
 
 class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
-    """Switch to force stop a VM."""
+    """Switch to force stop a VM or container."""
     
     def __init__(
         self,
@@ -413,7 +415,7 @@ class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
 
 
 class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
-    """Switch to force restart a VM."""
+    """Switch to force restart a VM or container."""
     
     def __init__(
         self,

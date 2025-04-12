@@ -2,7 +2,7 @@
 import logging
 from typing import Any, Dict, List, Optional, Set
 
-from homeassistant.components.device_tracker import SOURCE_TYPE_ROUTER
+from homeassistant.const import STATE_HOME, STATE_NOT_HOME
 from homeassistant.components.device_tracker.config_entry import ScannerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -64,7 +64,7 @@ class ProxmoxVMTracker(CoordinatorEntity, ScannerEntity):
     @property
     def source_type(self) -> str:
         """Return the source type of the device."""
-        return SOURCE_TYPE_ROUTER
+        return "router"
 
     @property
     def name(self) -> str:

@@ -1,14 +1,15 @@
 # Proxmox VE Integration for Home Assistant
 
-This custom integration allows you to monitor and control your Proxmox VE virtual machines, nodes, and storage from Home Assistant.
+This custom integration allows you to monitor and control your Proxmox VE virtual machines, LXC containers, nodes, and storage from Home Assistant.
 
 ## Features
 
-- Monitor VM status, CPU, RAM, disk usage, and IP addresses
-- Control VMs with start, shutdown, restart, force stop, and force restart buttons
+- Monitor VM/container status, CPU, RAM, disk usage, and IP addresses
+- Control VMs and containers with start, shutdown, restart, force stop, and force restart buttons
 - Monitor Proxmox nodes with CPU, memory, and disk usage sensors
 - Control nodes with shutdown and restart buttons
 - Monitor storage usage
+- Automatically detects and supports both QEMU VMs and LXC containers
 
 ## Installation
 
@@ -45,10 +46,10 @@ This custom integration allows you to monitor and control your Proxmox VE virtua
 
 After configuration, the following entities will be created:
 
-### For each VM:
+### For each VM/Container:
 
-- Device tracker: Shows if the VM is running
-- Binary sensor: VM status (running/stopped)
+- Device tracker: Shows if the VM/container is running
+- Binary sensor: VM/container status (running/stopped)
 - Sensors: CPU usage, memory usage, disk size, IP address (if available)
 - Switches: Start, shutdown, restart, force stop, force restart
 
