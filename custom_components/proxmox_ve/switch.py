@@ -118,6 +118,7 @@ class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
     
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
+        # Call turn_on_action in an executor to prevent blocking
         if await self.hass.async_add_executor_job(self._turn_on_action):
             self._is_on = True
             self.async_write_ha_state()

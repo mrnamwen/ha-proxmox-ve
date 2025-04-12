@@ -44,6 +44,7 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
+    # Create API client without connecting
     api = ProxmoxAPI(
         host=data[CONF_HOST],
         port=data[CONF_PORT],
@@ -54,6 +55,8 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
     )
 
     try:
+        # Use async_add_executor_job to run blocking call in an executor
+        # The test_connection method will handle connecting to the API
         result = await hass.async_add_executor_job(api.test_connection)
         if not result:
             raise CannotConnect

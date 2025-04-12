@@ -29,10 +29,16 @@ class ProxmoxAPI:
         self.realm = realm
         self.verify_ssl = verify_ssl
         self._proxmox = None
-        self._connect()
+        # Don't connect here, we'll connect on first use
+        # to avoid blocking calls in the constructor
 
     def _connect(self) -> None:
         """Connect to Proxmox API."""
+        # This method should only be called from methods
+        # that are executed in an executor
+        if self._proxmox is not None:
+            return
+
         try:
             self._proxmox = proxmoxer.ProxmoxAPI(
                 self.host,
@@ -47,7 +53,10 @@ class ProxmoxAPI:
 
     def test_connection(self) -> bool:
         """Test connection to Proxmox VE."""
+        # Always call _connect() first in methods that use the API
+        # This ensures lazy initialization of the connection
         try:
+            self._connect()
             self._proxmox.nodes.get()
             return True
         except Exception as error:
@@ -56,6 +65,7 @@ class ProxmoxAPI:
 
     def get_nodes(self) -> List[Dict]:
         """Get all nodes in the cluster."""
+        self._connect()
         nodes = []
         
         for node in self._proxmox.nodes.get():
@@ -100,6 +110,7 @@ class ProxmoxAPI:
 
     def get_vms(self) -> List[Dict]:
         """Get all VMs in the cluster."""
+        self._connect()
         vms = []
         
         for vm in self._proxmox.cluster.resources.get(type="vm"):
@@ -172,6 +183,7 @@ class ProxmoxAPI:
 
     def get_storages(self) -> List[Dict]:
         """Get all storage devices in the cluster."""
+        self._connect()
         storages = []
         
         for storage in self._proxmox.cluster.resources.get(type="storage"):
@@ -201,6 +213,7 @@ class ProxmoxAPI:
     def start_vm(self, node_id: str, vm_id: int) -> bool:
         """Start a VM."""
         try:
+            self._connect()
             self._proxmox.nodes(node_id).qemu(vm_id).status.start.post()
             return True
         except Exception as error:
@@ -210,6 +223,7 @@ class ProxmoxAPI:
     def shutdown_vm(self, node_id: str, vm_id: int) -> bool:
         """Shutdown a VM gracefully."""
         try:
+            self._connect()
             self._proxmox.nodes(node_id).qemu(vm_id).status.shutdown.post()
             return True
         except Exception as error:
@@ -219,6 +233,7 @@ class ProxmoxAPI:
     def restart_vm(self, node_id: str, vm_id: int) -> bool:
         """Restart a VM gracefully."""
         try:
+            self._connect()
             self._proxmox.nodes(node_id).qemu(vm_id).status.reboot.post()
             return True
         except Exception as error:
@@ -228,6 +243,7 @@ class ProxmoxAPI:
     def force_stop_vm(self, node_id: str, vm_id: int) -> bool:
         """Force stop a VM."""
         try:
+            self._connect()
             self._proxmox.nodes(node_id).qemu(vm_id).status.stop.post()
             return True
         except Exception as error:
@@ -237,6 +253,7 @@ class ProxmoxAPI:
     def force_restart_vm(self, node_id: str, vm_id: int) -> bool:
         """Force restart a VM."""
         try:
+            self._connect()
             # First stop, then start
             self._proxmox.nodes(node_id).qemu(vm_id).status.stop.post()
             self._proxmox.nodes(node_id).qemu(vm_id).status.start.post()
@@ -248,6 +265,7 @@ class ProxmoxAPI:
     def shutdown_node(self, node_id: str) -> bool:
         """Shutdown a Proxmox node."""
         try:
+            self._connect()
             self._proxmox.nodes(node_id).status.shutdown.post()
             return True
         except Exception as error:
@@ -257,6 +275,7 @@ class ProxmoxAPI:
     def restart_node(self, node_id: str) -> bool:
         """Restart a Proxmox node."""
         try:
+            self._connect()
             self._proxmox.nodes(node_id).status.reboot.post()
             return True
         except Exception as error:

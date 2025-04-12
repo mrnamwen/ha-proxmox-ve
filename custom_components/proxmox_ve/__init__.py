@@ -40,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass,
         _LOGGER,
         name=f"Proxmox VE {entry.data['host']}",
-        update_method=lambda: _async_update_data(api),
+        update_method=lambda: _async_update_data(hass, api),
         update_interval=timedelta(seconds=UPDATE_INTERVAL),
     )
     
@@ -79,20 +79,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-async def _async_update_data(api):
+async def _async_update_data(hass, api):
     """Update data from Proxmox VE API."""
     try:
         # Get all clusters, nodes, VMs, and storages
         data = {}
-        data["nodes"] = await asyncio.get_event_loop().run_in_executor(
-            None, api.get_nodes
-        )
-        data["vms"] = await asyncio.get_event_loop().run_in_executor(
-            None, api.get_vms
-        )
-        data["storages"] = await asyncio.get_event_loop().run_in_executor(
-            None, api.get_storages
-        )
+        data["nodes"] = await hass.async_add_executor_job(api.get_nodes)
+        data["vms"] = await hass.async_add_executor_job(api.get_vms)
+        data["storages"] = await hass.async_add_executor_job(api.get_storages)
         return data
     except Exception as e:
         _LOGGER.error("Error updating Proxmox VE data: %s", e)
