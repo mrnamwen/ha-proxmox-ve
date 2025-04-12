@@ -201,13 +201,19 @@ class ProxmoxAPI:
                         disks = {}
                         for key, value in config.items():
                             if key.startswith(("ide", "sata", "scsi", "virtio")):
-                                if "size" in value:
+                                if isinstance(value, dict) and "size" in value:
                                     disks[key] = value
                         
                         total_disk = 0
                         for disk in disks.values():
                             # Parse size string (e.g., "32G")
-                            size_str = disk.get("size", "0")
+                            if isinstance(disk, dict):
+                                size_str = disk.get("size", "0")
+                            elif isinstance(disk, str) and "size=" in disk:
+                                # Handle string format if it exists
+                                size_str = disk.split("size=")[1].split(",")[0]
+                            else:
+                                size_str = "0"
                             try:
                                 if size_str.endswith("G"):
                                     size = float(size_str[:-1]) * 1024 * 1024 * 1024

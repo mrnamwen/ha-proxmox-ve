@@ -106,7 +106,7 @@ class ProxmoxSensorBase(CoordinatorEntity, SensorEntity):
 class ProxmoxVMCpuSensor(ProxmoxSensorBase):
     """Sensor for Proxmox VM CPU usage."""
 
-    _attr_device_class = SensorDeviceClass.CPU
+    _attr_device_class = "cpu"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = PERCENTAGE
     
@@ -183,7 +183,7 @@ class ProxmoxVMCpuSensor(ProxmoxSensorBase):
 class ProxmoxVMMemorySensor(ProxmoxSensorBase):
     """Sensor for Proxmox VM memory usage."""
 
-    _attr_device_class = SensorDeviceClass.MEMORY
+    _attr_device_class = "memory"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfInformation.BYTES
     
@@ -264,7 +264,7 @@ class ProxmoxVMMemorySensor(ProxmoxSensorBase):
 class ProxmoxVMDiskSensor(ProxmoxSensorBase):
     """Sensor for Proxmox VM disk usage."""
 
-    _attr_device_class = SensorDeviceClass.DATA_SIZE
+    _attr_device_class = "data_size"
     _attr_state_class = SensorStateClass.TOTAL
     _attr_native_unit_of_measurement = UnitOfInformation.BYTES
     
@@ -336,7 +336,7 @@ class ProxmoxVMDiskSensor(ProxmoxSensorBase):
 class ProxmoxVMIpSensor(ProxmoxSensorBase):
     """Sensor for Proxmox VM IP address."""
 
-    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_device_class = None
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     
     def __init__(
@@ -411,7 +411,7 @@ class ProxmoxVMIpSensor(ProxmoxSensorBase):
 class ProxmoxNodeCpuSensor(ProxmoxSensorBase):
     """Sensor for Proxmox Node CPU usage."""
 
-    _attr_device_class = SensorDeviceClass.CPU
+    _attr_device_class = "cpu"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = PERCENTAGE
     
@@ -481,7 +481,7 @@ class ProxmoxNodeCpuSensor(ProxmoxSensorBase):
 class ProxmoxNodeMemorySensor(ProxmoxSensorBase):
     """Sensor for Proxmox Node memory usage."""
 
-    _attr_device_class = SensorDeviceClass.MEMORY
+    _attr_device_class = "memory"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfInformation.BYTES
     
@@ -561,7 +561,7 @@ class ProxmoxNodeMemorySensor(ProxmoxSensorBase):
 class ProxmoxNodeDiskSensor(ProxmoxSensorBase):
     """Sensor for Proxmox Node disk usage."""
 
-    _attr_device_class = SensorDeviceClass.DATA_SIZE
+    _attr_device_class = "data_size"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfInformation.BYTES
     
@@ -641,7 +641,7 @@ class ProxmoxNodeDiskSensor(ProxmoxSensorBase):
 class ProxmoxStorageSensor(ProxmoxSensorBase):
     """Sensor for Proxmox storage usage."""
 
-    _attr_device_class = SensorDeviceClass.DATA_SIZE
+    _attr_device_class = "data_size"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfInformation.BYTES
     
