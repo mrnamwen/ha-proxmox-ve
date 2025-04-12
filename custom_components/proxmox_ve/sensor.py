@@ -116,14 +116,30 @@ class ProxmoxVMCpuSensor(ProxmoxSensorBase):
         self, coordinator: DataUpdateCoordinator, vm_id: str, entry_id: str
     ) -> None:
         """Initialize the sensor."""
+        # First set up the coordinator and basic attributes before anything else
+        self.coordinator = coordinator
         self._vm_id = vm_id
         self._entry_id = entry_id
+        
+        # Set name based on vm_id initially, then get VM data
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_cpu"
+        name = f"VM {vm_id} CPU"
+        
+        # Initialize parent classes
+        # Explicitly initialize coordinator to prevent attribute error
+        CoordinatorEntity.__init__(self, coordinator)
+        SensorEntity.__init__(self)
+        
+        # Only now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_cpu"
-        name = f"{self._vm_data.get('name', f'VM {vm_id}')} CPU" if self._vm_data else f"VM {vm_id} CPU"
-        
-        super().__init__(coordinator, unique_id, name)
+        # Update name if we have VM data
+        if self._vm_data and self._vm_data.get("name"):
+            self._attr_name = f"{self._vm_data['name']} CPU"
+        else:
+            self._attr_name = name
+            
+        self._attr_unique_id = unique_id
         self._update_state()
     
     @callback

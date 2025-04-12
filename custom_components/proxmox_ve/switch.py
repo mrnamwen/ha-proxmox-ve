@@ -182,25 +182,35 @@ class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._vm_id = vm_id
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_start"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Start"
+        self._attr_icon = "mdi:play"
+        self._device_type = CATEGORY_VM
+        self._device_id = f"vm_{vm_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_start"
-        name = f"Start"
+        # Set device name based on VM data
+        self._device_name = self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}"
+        self._via_device = (DOMAIN, f"node_{node_id}")
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:play",
-            CATEGORY_VM,
-            f"vm_{vm_id}",
-            self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}",
-            (DOMAIN, f"node_{node_id}"),
-        )
+        # Update availability based on VM state
         self._update_availability()
     
     @callback
@@ -243,25 +253,35 @@ class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._vm_id = vm_id
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_shutdown"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Shutdown"
+        self._attr_icon = "mdi:stop"
+        self._device_type = CATEGORY_VM
+        self._device_id = f"vm_{vm_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_shutdown"
-        name = f"Shutdown"
+        # Set device name based on VM data
+        self._device_name = self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}"
+        self._via_device = (DOMAIN, f"node_{node_id}")
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:stop",
-            CATEGORY_VM,
-            f"vm_{vm_id}",
-            self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}",
-            (DOMAIN, f"node_{node_id}"),
-        )
+        # Update availability based on VM state
         self._update_availability()
     
     @callback
@@ -304,25 +324,35 @@ class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._vm_id = vm_id
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_restart"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Restart"
+        self._attr_icon = "mdi:restart"
+        self._device_type = CATEGORY_VM
+        self._device_id = f"vm_{vm_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_restart"
-        name = f"Restart"
+        # Set device name based on VM data
+        self._device_name = self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}"
+        self._via_device = (DOMAIN, f"node_{node_id}")
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:restart",
-            CATEGORY_VM,
-            f"vm_{vm_id}",
-            self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}",
-            (DOMAIN, f"node_{node_id}"),
-        )
+        # Update availability based on VM state
         self._update_availability()
     
     @callback
@@ -365,25 +395,35 @@ class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._vm_id = vm_id
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_force_stop"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Force Stop"
+        self._attr_icon = "mdi:stop-circle"
+        self._device_type = CATEGORY_VM
+        self._device_id = f"vm_{vm_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_force_stop"
-        name = f"Force Stop"
+        # Set device name based on VM data
+        self._device_name = self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}"
+        self._via_device = (DOMAIN, f"node_{node_id}")
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:stop-circle",
-            CATEGORY_VM,
-            f"vm_{vm_id}",
-            self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}",
-            (DOMAIN, f"node_{node_id}"),
-        )
+        # Update availability based on VM state
         self._update_availability()
     
     @callback
@@ -426,25 +466,35 @@ class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._vm_id = vm_id
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_force_restart"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Force Restart"
+        self._attr_icon = "mdi:restart-alert"
+        self._device_type = CATEGORY_VM
+        self._device_id = f"vm_{vm_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_force_restart"
-        name = f"Force Restart"
+        # Set device name based on VM data
+        self._device_name = self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}"
+        self._via_device = (DOMAIN, f"node_{node_id}")
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:restart-alert",
-            CATEGORY_VM,
-            f"vm_{vm_id}",
-            self._vm_data.get("name", f"VM {vm_id}") if self._vm_data else f"VM {vm_id}",
-            (DOMAIN, f"node_{node_id}"),
-        )
+        # Update availability based on VM state
         self._update_availability()
     
     @callback
@@ -486,23 +536,33 @@ class ProxmoxNodeShutdownSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_shutdown"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Shutdown"
+        self._attr_icon = "mdi:power"
+        self._device_type = CATEGORY_NODE
+        self._device_id = f"node_{node_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get node data after coordinator is available
         self._node_data = self._get_node_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_shutdown"
-        name = f"Shutdown"
+        # Set device name based on node data
+        self._device_name = self._node_data.get("name", f"Node {node_id}") if self._node_data else f"Node {node_id}"
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:power",
-            CATEGORY_NODE,
-            f"node_{node_id}",
-            self._node_data.get("name", f"Node {node_id}") if self._node_data else f"Node {node_id}",
-        )
+        # Update availability based on node state
         self._update_availability()
     
     @callback
@@ -544,23 +604,33 @@ class ProxmoxNodeRestartSwitch(ProxmoxSwitchBase):
         entry_id: str,
     ) -> None:
         """Initialize the switch."""
+        # Set up basic attributes and coordinator first
+        self.coordinator = coordinator
+        self._api = api
         self._node_id = node_id
         self._entry_id = entry_id
+        
+        # Set up parent classes
+        CoordinatorEntity.__init__(self, coordinator)
+        SwitchEntity.__init__(self)
+        
+        # Set basic attributes
+        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_restart"
+        self._attr_unique_id = unique_id
+        self._attr_name = "Restart"
+        self._attr_icon = "mdi:restart"
+        self._device_type = CATEGORY_NODE
+        self._device_id = f"node_{node_id}"
+        self._available = True
+        self._is_on = False
+        
+        # Now get node data after coordinator is available
         self._node_data = self._get_node_data()
         
-        unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_restart"
-        name = f"Restart"
+        # Set device name based on node data
+        self._device_name = self._node_data.get("name", f"Node {node_id}") if self._node_data else f"Node {node_id}"
         
-        super().__init__(
-            coordinator,
-            api,
-            unique_id,
-            name,
-            "mdi:restart",
-            CATEGORY_NODE,
-            f"node_{node_id}",
-            self._node_data.get("name", f"Node {node_id}") if self._node_data else f"Node {node_id}",
-        )
+        # Update availability based on node state
         self._update_availability()
     
     @callback
