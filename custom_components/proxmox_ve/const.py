@@ -1,7 +1,7 @@
 """Constants for the Proxmox VE integration."""
 
 DOMAIN = "proxmox_ve"
-PLATFORMS = ["device_tracker", "binary_sensor", "sensor", "switch"]
+PLATFORMS = ["device_tracker", "binary_sensor", "sensor", "switch", "button"]
 UPDATE_INTERVAL = 30  # seconds
 
 # Configuration

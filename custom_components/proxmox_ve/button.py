@@ -1,11 +1,11 @@
-"""Switch platform for Proxmox VE."""
+"""Button platform for Proxmox VE."""
 import logging
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, Optional
 
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -18,11 +18,6 @@ from .const import (
     CATEGORY_VM,
     CATEGORY_NODE,
     STATUS_RUNNING,
-    SERVICE_START,
-    SERVICE_SHUTDOWN,
-    SERVICE_RESTART,
-    SERVICE_FORCE_STOP,
-    SERVICE_FORCE_RESTART,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,15 +28,61 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Proxmox VE switches."""
-    # All switch functionality has been replaced with buttons
-    # This setup function remains for backward compatibility
-    # but no longer creates any entities
-    return
+    """Set up Proxmox VE buttons."""
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
+    api = hass.data[DOMAIN][config_entry.entry_id]["api"]
+    
+    entities = []
+    
+    # Add VM buttons
+    for vm in coordinator.data.get("vms", []):
+        vm_id = vm["id"]
+        node_id = vm["node"]
+        
+        # Start button (only for stopped VMs)
+        entities.append(
+            ProxmoxVMStartButton(coordinator, api, vm_id, node_id, config_entry.entry_id)
+        )
+        
+        # Shutdown button (only for running VMs)
+        entities.append(
+            ProxmoxVMShutdownButton(coordinator, api, vm_id, node_id, config_entry.entry_id)
+        )
+        
+        # Restart button
+        entities.append(
+            ProxmoxVMRestartButton(coordinator, api, vm_id, node_id, config_entry.entry_id)
+        )
+        
+        # Force stop button
+        entities.append(
+            ProxmoxVMForceStopButton(coordinator, api, vm_id, node_id, config_entry.entry_id)
+        )
+        
+        # Force restart button
+        entities.append(
+            ProxmoxVMForceRestartButton(coordinator, api, vm_id, node_id, config_entry.entry_id)
+        )
+    
+    # Add Node buttons
+    for node in coordinator.data.get("nodes", []):
+        node_id = node["id"]
+        
+        # Shutdown node button
+        entities.append(
+            ProxmoxNodeShutdownButton(coordinator, api, node_id, config_entry.entry_id)
+        )
+        
+        # Restart node button
+        entities.append(
+            ProxmoxNodeRestartButton(coordinator, api, node_id, config_entry.entry_id)
+        )
+    
+    async_add_entities(entities)
 
 
-class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
-    """Base switch for Proxmox VE actions."""
+class ProxmoxButtonBase(CoordinatorEntity, ButtonEntity):
+    """Base button for Proxmox VE actions."""
 
     _attr_has_entity_name = True
     
@@ -57,7 +98,7 @@ class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
         device_name: str,
         via_device: Optional[tuple] = None,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Explicitly initialize the CoordinatorEntity parent class
         CoordinatorEntity.__init__(self, coordinator)
         self.coordinator = coordinator
@@ -70,35 +111,14 @@ class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
         self._device_name = device_name
         self._via_device = via_device
         self._available = True
-        self._is_on = False
     
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the entity on."""
-        # Call turn_on_action in an executor to prevent blocking
-        if await self.hass.async_add_executor_job(self._turn_on_action):
-            self._is_on = True
-            self.async_write_ha_state()
-            # Schedule turn off after a short delay since these are momentary actions
-            self.hass.async_create_task(self._async_turn_off_later())
+    async def async_press(self) -> None:
+        """Press the button."""
+        await self.hass.async_add_executor_job(self._action)
     
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the entity off."""
-        # These are momentary switches, so no real turn off action
-        self._is_on = False
-        self.async_write_ha_state()
-    
-    async def _async_turn_off_later(self) -> None:
-        """Turn off the switch after a short delay."""
-        await self.hass.async_add_job(self.async_turn_off)
-    
-    def _turn_on_action(self) -> bool:
-        """Action to perform when turning on."""
-        return False
-    
-    @property
-    def is_on(self) -> bool:
-        """Return true if the switch is on."""
-        return self._is_on
+    def _action(self) -> None:
+        """Action to perform when pressing the button."""
+        pass
     
     @property
     def available(self) -> bool:
@@ -124,8 +144,8 @@ class ProxmoxSwitchBase(CoordinatorEntity, SwitchEntity):
         return device_info
 
 
-class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
-    """Switch to start a VM or container."""
+class ProxmoxVMStartButton(ProxmoxButtonBase):
+    """Button to start a VM or container."""
     
     def __init__(
         self,
@@ -135,7 +155,7 @@ class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -145,7 +165,6 @@ class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_start"
@@ -155,7 +174,6 @@ class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_VM
         self._device_id = f"vm_{vm_id}"
         self._available = True
-        self._is_on = False
         
         # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
@@ -190,13 +208,13 @@ class ProxmoxVMStartSwitch(ProxmoxSwitchBase):
         # Start button is only available when VM is stopped
         self._available = self._vm_data.get("status") != STATUS_RUNNING
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Start the VM."""
-        return self._api.start_vm(self._node_id, self._vm_id)
+        self._api.start_vm(self._node_id, self._vm_id)
 
 
-class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
-    """Switch to shutdown a VM or container."""
+class ProxmoxVMShutdownButton(ProxmoxButtonBase):
+    """Button to shutdown a VM or container."""
     
     def __init__(
         self,
@@ -206,7 +224,7 @@ class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -216,7 +234,6 @@ class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_shutdown"
@@ -226,7 +243,6 @@ class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_VM
         self._device_id = f"vm_{vm_id}"
         self._available = True
-        self._is_on = False
         
         # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
@@ -261,13 +277,13 @@ class ProxmoxVMShutdownSwitch(ProxmoxSwitchBase):
         # Shutdown button is only available when VM is running
         self._available = self._vm_data.get("status") == STATUS_RUNNING
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Shutdown the VM."""
-        return self._api.shutdown_vm(self._node_id, self._vm_id)
+        self._api.shutdown_vm(self._node_id, self._vm_id)
 
 
-class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
-    """Switch to restart a VM or container."""
+class ProxmoxVMRestartButton(ProxmoxButtonBase):
+    """Button to restart a VM or container."""
     
     def __init__(
         self,
@@ -277,7 +293,7 @@ class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -287,7 +303,6 @@ class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_restart"
@@ -297,7 +312,6 @@ class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_VM
         self._device_id = f"vm_{vm_id}"
         self._available = True
-        self._is_on = False
         
         # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
@@ -332,13 +346,13 @@ class ProxmoxVMRestartSwitch(ProxmoxSwitchBase):
         # Restart button is only available when VM is running
         self._available = self._vm_data.get("status") == STATUS_RUNNING
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Restart the VM."""
-        return self._api.restart_vm(self._node_id, self._vm_id)
+        self._api.restart_vm(self._node_id, self._vm_id)
 
 
-class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
-    """Switch to force stop a VM or container."""
+class ProxmoxVMForceStopButton(ProxmoxButtonBase):
+    """Button to force stop a VM or container."""
     
     def __init__(
         self,
@@ -348,7 +362,7 @@ class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -358,7 +372,6 @@ class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_force_stop"
@@ -368,7 +381,6 @@ class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_VM
         self._device_id = f"vm_{vm_id}"
         self._available = True
-        self._is_on = False
         
         # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
@@ -403,13 +415,13 @@ class ProxmoxVMForceStopSwitch(ProxmoxSwitchBase):
         # Force stop button is only available when VM is running
         self._available = self._vm_data.get("status") == STATUS_RUNNING
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Force stop the VM."""
-        return self._api.force_stop_vm(self._node_id, self._vm_id)
+        self._api.force_stop_vm(self._node_id, self._vm_id)
 
 
-class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
-    """Switch to force restart a VM or container."""
+class ProxmoxVMForceRestartButton(ProxmoxButtonBase):
+    """Button to force restart a VM or container."""
     
     def __init__(
         self,
@@ -419,7 +431,7 @@ class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -429,7 +441,6 @@ class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_force_restart"
@@ -439,7 +450,6 @@ class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_VM
         self._device_id = f"vm_{vm_id}"
         self._available = True
-        self._is_on = False
         
         # Now get VM data after coordinator is available
         self._vm_data = self._get_vm_data()
@@ -474,13 +484,13 @@ class ProxmoxVMForceRestartSwitch(ProxmoxSwitchBase):
         # Force restart button is available regardless of status
         self._available = True
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Force restart the VM."""
-        return self._api.force_restart_vm(self._node_id, self._vm_id)
+        self._api.force_restart_vm(self._node_id, self._vm_id)
 
 
-class ProxmoxNodeShutdownSwitch(ProxmoxSwitchBase):
-    """Switch to shutdown a Proxmox node."""
+class ProxmoxNodeShutdownButton(ProxmoxButtonBase):
+    """Button to shutdown a Proxmox node."""
     
     def __init__(
         self,
@@ -489,7 +499,7 @@ class ProxmoxNodeShutdownSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -498,7 +508,6 @@ class ProxmoxNodeShutdownSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_shutdown"
@@ -508,7 +517,6 @@ class ProxmoxNodeShutdownSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_NODE
         self._device_id = f"node_{node_id}"
         self._available = True
-        self._is_on = False
         
         # Now get node data after coordinator is available
         self._node_data = self._get_node_data()
@@ -542,13 +550,13 @@ class ProxmoxNodeShutdownSwitch(ProxmoxSwitchBase):
         # Node shutdown button is only available when node is online
         self._available = self._node_data.get("status") == "online"
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Shutdown the node."""
-        return self._api.shutdown_node(self._node_id)
+        self._api.shutdown_node(self._node_id)
 
 
-class ProxmoxNodeRestartSwitch(ProxmoxSwitchBase):
-    """Switch to restart a Proxmox node."""
+class ProxmoxNodeRestartButton(ProxmoxButtonBase):
+    """Button to restart a Proxmox node."""
     
     def __init__(
         self,
@@ -557,7 +565,7 @@ class ProxmoxNodeRestartSwitch(ProxmoxSwitchBase):
         node_id: str,
         entry_id: str,
     ) -> None:
-        """Initialize the switch."""
+        """Initialize the button."""
         # Set up basic attributes and coordinator first
         self.coordinator = coordinator
         self._api = api
@@ -566,7 +574,6 @@ class ProxmoxNodeRestartSwitch(ProxmoxSwitchBase):
         
         # Set up parent classes
         CoordinatorEntity.__init__(self, coordinator)
-        SwitchEntity.__init__(self)
         
         # Set basic attributes
         unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_restart"
@@ -576,7 +583,6 @@ class ProxmoxNodeRestartSwitch(ProxmoxSwitchBase):
         self._device_type = CATEGORY_NODE
         self._device_id = f"node_{node_id}"
         self._available = True
-        self._is_on = False
         
         # Now get node data after coordinator is available
         self._node_data = self._get_node_data()
@@ -610,6 +616,6 @@ class ProxmoxNodeRestartSwitch(ProxmoxSwitchBase):
         # Node restart button is only available when node is online
         self._available = self._node_data.get("status") == "online"
     
-    def _turn_on_action(self) -> bool:
+    def _action(self) -> None:
         """Restart the node."""
-        return self._api.restart_node(self._node_id)
+        self._api.restart_node(self._node_id)
