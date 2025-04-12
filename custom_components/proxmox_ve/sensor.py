@@ -96,7 +96,9 @@ class ProxmoxSensorBase(CoordinatorEntity, SensorEntity):
         self, coordinator: DataUpdateCoordinator, unique_id: str, name: str
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator)
+        # Explicitly initialize the CoordinatorEntity parent class
+        CoordinatorEntity.__init__(self, coordinator)
+        self.coordinator = coordinator
         self._attr_unique_id = unique_id
         self._attr_name = name
         self._state: Any = None

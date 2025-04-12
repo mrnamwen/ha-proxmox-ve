@@ -42,7 +42,9 @@ class ProxmoxVMTracker(CoordinatorEntity, ScannerEntity):
         self, coordinator: DataUpdateCoordinator, vm_id: str, entry_id: str
     ) -> None:
         """Initialize the VM tracker."""
-        super().__init__(coordinator)
+        # Explicitly initialize the CoordinatorEntity parent class
+        CoordinatorEntity.__init__(self, coordinator)
+        self.coordinator = coordinator
         self._vm_id = vm_id
         self._entry_id = entry_id
         self._attr_unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_tracker"

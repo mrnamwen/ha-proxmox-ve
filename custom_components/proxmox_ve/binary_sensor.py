@@ -70,7 +70,9 @@ class ProxmoxVMStatusSensor(CoordinatorEntity, BinarySensorEntity):
         entry_id: str
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator)
+        # Explicitly initialize the CoordinatorEntity parent class
+        CoordinatorEntity.__init__(self, coordinator)
+        self.coordinator = coordinator
         self._vm_id = vm_id
         self._entry_id = entry_id
         self._attr_unique_id = f"{DOMAIN}_{entry_id}_vm_{vm_id}_status"
@@ -147,7 +149,9 @@ class ProxmoxNodeStatusSensor(CoordinatorEntity, BinarySensorEntity):
         entry_id: str
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator)
+        # Explicitly initialize the CoordinatorEntity parent class
+        CoordinatorEntity.__init__(self, coordinator)
+        self.coordinator = coordinator
         self._node_id = node_id
         self._entry_id = entry_id
         self._attr_unique_id = f"{DOMAIN}_{entry_id}_node_{node_id}_status"
